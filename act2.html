@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Lobster+Two:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+
+  <meta charset="UTF-8">
+  <title>Act 2 | ARG Hunt</title>
+  <style>
+    #shortcut-guide {
+      position: fixed;
+      bottom: 15px;
+      right: 15px;
+    
+      color: white;
+      font-family: Lobster Two, sans-serif;
+      font-size: 24px;
+      padding: 10px 14px;
+      text-align: right;
+  
+      z-index: 10000;
+      pointer-events: none;
+    }
+
+    @keyframes bodyFadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes titleFade {
+      0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+      33.3%  { opacity: 1; transform: translate(-43.666%, -33.33%) scale(0.966); }
+      66.6%  { opacity: 1; transform: translate(-39.333%, -16.66%) scale(1.033); }
+      100% { opacity: 0; transform: translate(-34%, -0%) scale(1.1); }
+    }
+
+    @keyframes titleimgFade {
+      0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.9); }
+      33.3%  { opacity: 1; transform: translate(-50%, -50%) scale(0.976); }
+      66.6%  { opacity: 1; transform: translate(-50%, -50%) scale(1.053); }
+      100% { opacity: 0; transform: translate(-50%, -50%) scale(1.13); }
+    }
+
+    @keyframes dimBackground {
+      0%   { opacity: 0; }
+      25%  { opacity: 0.7; }
+      80%  { opacity: 0.7; }
+      100% { opacity: 0; }
+    }
+
+    #background-dim {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: black;
+      opacity: 0;
+      animation: dimBackground 8.5s linear forwards;
+      z-index: 9998;
+      pointer-events: none;
+    }
+
+    #title-overlay {
+      position: fixed;
+      top: 70%;
+      left: 58%;
+      transform: translate(-50%, -50%);
+      color: #000000;
+      font-size: 4em;
+      font-family: "Lobster Two", sans-serif;
+      letter-spacing: 5px;
+      text-align: center;
+      opacity: 0;
+      animation: titleFade 6s linear 2s forwards;
+      z-index: 9999;
+      pointer-events: none;
+      filter: drop-shadow(0 0 5px rgba(70, 180, 255, 1));
+      -webkit-text-stroke-width: .6px;
+      -webkit-text-stroke-color: rgba(70, 180, 255, 1) ;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.14); }
+      to { opacity: 1; transform: scale(0.18); }
+    }
+
+    #title-img {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 800px;
+      opacity: 0;
+      animation: titleimgFade 6.5s linear forwards;
+      z-index: 9999;
+      pointer-events: none;
+    }
+
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+      background-image: url("img-j/bg2.png");
+      background-size: cover;
+      background-position: 50%;
+      background-repeat: no-repeat;
+      width: 100vw;
+      height: 100vh;
+      animation: bodyFadeIn 1s ease-in forwards;
+    }
+    
+    .piece {
+      position: absolute;
+      transform: scale(0.18);
+      transform-origin: top left;
+      
+      cursor: grab;
+      user-select: none;
+      -webkit-user-drag: none;
+
+      opacity: 0;
+      animation: fadeIn 0.8s ease forwards;
+    }
+
+   .piece:hover {
+     filter: drop-shadow(0 0 30px rgba(70, 180, 255, 1));
+     transform: scale(0.2);
+     transition: filter 0.2s ease, transform 0.2s ease;
+     z-index: 10;
+   }
+
+    .selection-box {
+      position: absolute;
+      border: 2px solid rgba(70, 180, 255, 1);
+      background-color: rgba(70, 180, 255, 0.2);
+      pointer-events: none;
+      z-index: 9999;
+
+    }
+
+    .selected {
+      filter:drop-shadow(0 0 30px rgba(70, 180, 255, 1));
+    }
+
+    
+
+  </style>
+</head>
+
+<div id="shortcut-guide">
+  <p><strong>Undo:</strong> Ctrl + Z</p>
+  <p><strong>Redo:</strong> Ctrl + Shift + Z</p>
+</div>
+
+<body>
+  <div id="background-dim"></div>
+  <img id="title-img" src="img-j/bg.png">
+  <div id="title-overlay">ACT 2</div>
+<div id="puzzle-container"> 
+        
+</div>
+
+<script>
+const SCALE = 0.18;
+const container = document.getElementById('puzzle-container');
+const letters = ['A','B','C','D','E','F','G','H'];
+const scatterMargin = 200;
+const maxX = window.innerWidth - scatterMargin;
+const maxY = window.innerHeight - scatterMargin;
+const selectedPieces = new Set();
+
+let selectionBox = null;
+let isDragging = false;
+let isSelecting = false;
+let dragStartX = 0, dragStartY = 0;
+let currentTarget = null;
+
+// --- History stacks for undo/redo ---
+const undoStack = [];
+const redoStack = [];
+
+function saveState() {
+  const pieces = [...document.querySelectorAll('.piece')];
+  const state = pieces.map(p => ({
+    id: p.src, // or use custom ID if needed
+    left: p.style.left,
+    top: p.style.top
+  }));
+  undoStack.push(state);
+  if (undoStack.length > 100) undoStack.shift(); // optional: limit memory
+  redoStack.length = 0; // clear redo stack after new action
+}
+
+function captureCurrentState() {
+  const pieces = [...document.querySelectorAll('.piece')];
+  return pieces.map(p => ({
+    id: p.src,
+    left: p.style.left,
+    top: p.style.top
+  }));
+}
+
+function applyState(state) {
+  state.forEach(({ id, left, top }) => {
+    const piece = [...document.querySelectorAll('.piece')].find(p => p.src.endsWith(id.split('/').pop()));
+    if (piece) {
+      piece.style.left = left;
+      piece.style.top = top;
+    }
+  });
+}
+
+// Create pieces
+for (let i = 0; i < letters.length; i++) {
+  for (let j = 1; j <= 8; j++) {
+    const img = document.createElement('img');
+    img.src = `img-j/${letters[i]}_${j}.png`;
+    img.className = 'piece';
+    const delay = 0.5 + Math.random() * 5;
+    img.style.animationDelay = `${delay}s`;
+    img.style.left = scatterMargin/2 + Math.random() * (maxX - scatterMargin/2) + 'px';
+    img.style.top = scatterMargin/2 + Math.random() * (maxY - scatterMargin/2) + 'px';
+    container.appendChild(img);
+  }
+}
+
+// Save initial state
+window.addEventListener('load', saveState);
+
+// Mouse events
+document.addEventListener('mousedown', (e) => {
+  dragStartX = e.clientX;
+  dragStartY = e.clientY;
+  const target = e.target;
+
+  if (target.classList.contains('piece')) {
+    currentTarget = target;
+
+    saveState();
+
+    if (!target.classList.contains('selected')) {
+      selectedPieces.forEach(p => p.classList.remove('selected'));
+      selectedPieces.clear();
+      target.classList.add('selected');
+      selectedPieces.add(target);
+    }
+
+    isDragging = true;
+    selectedPieces.forEach(p => {
+      p.dataset.startLeft = parseFloat(p.style.left);
+      p.dataset.startTop = parseFloat(p.style.top);
+    });
+
+  } else {
+    isSelecting = true;
+    selectionBox = document.createElement('div');
+    selectionBox.className = 'selection-box';
+    selectionBox.style.left = dragStartX + 'px';
+    selectionBox.style.top = dragStartY + 'px';
+    container.appendChild(selectionBox);
+  }
+});
+
+document.addEventListener('mousemove', (e) => {
+  const dx = e.clientX - dragStartX;
+  const dy = e.clientY - dragStartY;
+
+  if (isDragging) {
+    selectedPieces.forEach(p => {
+      const newX = parseFloat(p.dataset.startLeft) + dx;
+      const newY = parseFloat(p.dataset.startTop) + dy;
+      p.style.left = `${newX}px`;
+      p.style.top = `${newY}px`;
+    });
+  }
+
+  if (isSelecting && selectionBox) {
+    const currentX = e.clientX;
+    const currentY = e.clientY;
+    selectionBox.style.left = Math.min(dragStartX, currentX) + 'px';
+    selectionBox.style.top = Math.min(dragStartY, currentY) + 'px';
+    selectionBox.style.width = Math.abs(currentX - dragStartX) + 'px';
+    selectionBox.style.height = Math.abs(currentY - dragStartY) + 'px';
+  }
+});
+
+document.addEventListener('mouseup', (e) => {
+  if (isDragging) isDragging = false;
+
+  if (isSelecting && selectionBox) {
+    const box = selectionBox.getBoundingClientRect();
+    const pieces = document.querySelectorAll('.piece');
+    selectedPieces.clear();
+    pieces.forEach(p => {
+      p.classList.remove('selected');
+      const rect = p.getBoundingClientRect();
+      if (
+        rect.left < box.right &&
+        rect.right > box.left &&
+        rect.top < box.bottom &&
+        rect.bottom > box.top
+      ) {
+        p.classList.add('selected');
+        selectedPieces.add(p);
+      }
+    });
+    selectionBox.remove();
+    selectionBox = null;
+    isSelecting = false;
+  }
+
+  currentTarget = null;
+});
+
+document.addEventListener('keydown', (e) => {
+  const isUndo = (e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z';
+  const isRedo = ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z')));
+
+  if (isUndo) {
+    e.preventDefault();
+    if (undoStack.length > 1) {
+      const currentState = captureCurrentState();
+      redoStack.push(currentState);
+      undoStack.pop(); // Discard current
+      const prevState = undoStack[undoStack.length - 1];
+      applyState(prevState);
+    }
+  }
+
+  if (isRedo) {
+    e.preventDefault();
+    if (redoStack.length > 0) {
+      const currentState = captureCurrentState();
+      undoStack.push(currentState);
+      const nextState = redoStack.pop();
+      applyState(nextState);
+    }
+  }
+});
+
+document.addEventListener('selectstart', e => e.preventDefault());
+document.addEventListener('dragstart', e => e.preventDefault());
+</script>
+ </body> </html>
+
+
+
+
+
+  
