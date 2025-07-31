@@ -1,0 +1,98 @@
+.legends-com {
+	position: relative;         
+    width: 100%;
+    height: 100vh;             
+    overflow: hidden;           
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+     
+}
+
+
+img.dawiuh12 {
+	height: 100vh;
+	width: 100vw;
+	object-fit: contain;
+	display: block;
+}
+
+img.ending {
+	height: 100%;
+	width: 100%;
+	object-fit: contain;
+	display: block;
+}
+
+.ty {
+    position: absolute;
+    padding: 1em 2em;
+    color: white;
+    text-decoration: none;
+    
+    font-family: Lobster Two, sans-serif;
+    font-size: 21px;
+    
+    z-index: 2;
+}
+
+.ty:hover {
+    color: cyan;
+}
+
+.img-container {
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.bgstory {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    display: block;
+}
+
+.stage5 {
+    position: absolute;
+    bottom: 5em;    /* distance from bottom */
+    left: 17em;      /* distance from left */
+    padding: 0.8em 1.2em;
+    background-color: white;
+    color: black;
+    text-decoration: none;
+    
+    font-family: Lobster Two, sans-serif;
+    font-size: 20px;
+    border-radius: 6px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.stage5:hover {
+    background-color: cyan;
+    color: blue;
+    transform: scale(1.05);
+}
+
+.stage2 {
+    position: absolute;
+    bottom: 20em;    /* distance from bottom */
+    left: 42em;      /* distance from left */
+    padding: 0.8em 1.2em;
+    background-color: white;
+    color: black;
+    text-decoration: none;
+    
+    font-family: Lobster Two, sans-serif;
+    font-size: 20px;
+    border-radius: 6px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.stage2:hover {
+    background-color: cyan;
+    color: blue;
+    transform: scale(1.05);
+}
